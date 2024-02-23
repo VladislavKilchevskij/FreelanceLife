@@ -20,6 +20,9 @@ public class QualificationServlet extends HttpServlet {
 
     private final ExceptionHandler exceptionHandler;
 
+    private static final String CONTENT_JSON = "application/json";
+
+    private static final String PARAMETER_ID = "id";
 
     public QualificationServlet() {
         this.service = new QualificationServiceImpl();
@@ -33,15 +36,11 @@ public class QualificationServlet extends HttpServlet {
         this.exceptionHandler = exceptionHandler;
     }
 
-    private static final String CONTENT_JSON = "application/json";
-
-    private static final String PARAMETER_ID = "id";
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         try {
             String param = req.getParameter(PARAMETER_ID);
-            String jasonResponse;
+            String jsonResponse;
             if (param != null) {
                 Long id = Long.parseLong(param);
                 var resultDto = service.findById(id);
@@ -49,20 +48,18 @@ public class QualificationServlet extends HttpServlet {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-                jasonResponse = jsonMapper.toJson(resultDto);
+                jsonResponse = jsonMapper.toJson(resultDto);
             } else {
                 var dtos = service.findAll();
                 if (dtos.isEmpty()) {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-                jasonResponse = jsonMapper.toJson(dtos);
+                jsonResponse = jsonMapper.toJson(dtos);
             }
             resp.setContentType(CONTENT_JSON);
             resp.setStatus(HttpServletResponse.SC_OK);
-            try (var out = resp.getWriter()) {
-                out.println(jasonResponse);
-            }
+            ServletUtil.sendJsonResponse(jsonResponse, resp);
         } catch (NumberFormatException | IOException e) {
             exceptionHandler.handleException(e, resp);
         }
@@ -78,9 +75,7 @@ public class QualificationServlet extends HttpServlet {
                 String jsonResp = jsonMapper.toJson(resultDto);
                 resp.setContentType(CONTENT_JSON);
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                try (var out = resp.getWriter()) {
-                    out.println(jsonResp);
-                }
+                ServletUtil.sendJsonResponse(jsonResp, resp);
             }
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (IOException e) {

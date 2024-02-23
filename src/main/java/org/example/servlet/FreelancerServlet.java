@@ -39,7 +39,7 @@ public class FreelancerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         try {
             String param = req.getParameter(PARAMETER_ID);
-            String jasonResponse;
+            String jsonResponse;
             if (param != null) {
                 Long id = Long.parseLong(param);
                 var resultDto = service.findById(id);
@@ -47,20 +47,18 @@ public class FreelancerServlet extends HttpServlet {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-                jasonResponse = jsonMapper.toJson(resultDto);
+                jsonResponse = jsonMapper.toJson(resultDto);
             } else {
                 var dtos = service.findAll();
                 if (dtos.isEmpty()) {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-                jasonResponse = jsonMapper.toJson(dtos);
+                jsonResponse = jsonMapper.toJson(dtos);
             }
             resp.setContentType(CONTENT_JSON);
             resp.setStatus(HttpServletResponse.SC_OK);
-            try (var out = resp.getWriter()) {
-                out.println(jasonResponse);
-            }
+            ServletUtil.sendJsonResponse(jsonResponse, resp);
         } catch (NumberFormatException | IOException e) {
             exceptionHandler.handleException(e, resp);
         }
@@ -76,9 +74,7 @@ public class FreelancerServlet extends HttpServlet {
                 String jsonResp = jsonMapper.toJson(resultDto);
                 resp.setContentType(CONTENT_JSON);
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                try (var out = resp.getWriter()) {
-                    out.println(jsonResp);
-                }
+                ServletUtil.sendJsonResponse(jsonResp, resp);
             }
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (IOException e) {

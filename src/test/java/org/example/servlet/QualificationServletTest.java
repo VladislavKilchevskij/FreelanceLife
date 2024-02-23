@@ -15,13 +15,12 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 class QualificationServletTest {
@@ -49,29 +48,33 @@ class QualificationServletTest {
     }
 
     @Test
-    void doGetWhenParameterPresentAndValidThenReturnDto() throws IOException {
-        var dto = new QualificationDto();
-        var mockWriter = mock(PrintWriter.class);
+    void testConstructor() {
+        var qualificationServlet = new QualificationServlet();
+        assertNotNull(qualificationServlet);
+    }
 
-        when(request.getParameter(PARAMETER_ID)).thenReturn(String.valueOf(LONG_ID));
-        when(service.findById(LONG_ID)).thenReturn(dto);
-        when(jsonMapper.toJson(dto)).thenReturn(JSON_TEST);
-        when(response.getWriter()).thenReturn(mockWriter);
+    @Test
+    void doGetWhenParameterPresentAndValidThenReturnDto() {
+        var dtoMock = mock(QualificationDto.class);
 
-        servlet.doGet(request, response);
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            when(request.getParameter(PARAMETER_ID)).thenReturn(String.valueOf(LONG_ID));
+            when(service.findById(LONG_ID)).thenReturn(dtoMock);
+            when(jsonMapper.toJson(dtoMock)).thenReturn(JSON_TEST);
 
-        verify(request, times(1)).getParameter(PARAMETER_ID);
-        verify(service, times(1)).findById(LONG_ID);
-        verify(jsonMapper, times(1)).toJson(dto);
-        verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
-        verify(response, times(1)).getWriter();
-        verify(mockWriter, times(1)).println(anyString());
+            servlet.doGet(request, response);
+
+            verify(request, times(1)).getParameter(PARAMETER_ID);
+            verify(service, times(1)).findById(LONG_ID);
+            verify(jsonMapper, times(1)).toJson(dtoMock);
+            verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
+            verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
+            mockedStatic.verify(() -> ServletUtil.sendJsonResponse(anyString(), eq(response)), times(1));
+        }
     }
 
     @Test
     void doGetWhenParameterInvalidThenHandleNumberFormatException() {
-
         when(request.getParameter(PARAMETER_ID)).thenReturn("invalidId");
 
         servlet.doGet(request, response);
@@ -93,24 +96,24 @@ class QualificationServletTest {
     }
 
     @Test
-    void doGetWhenParameterAbsentThenReturnList() throws IOException {
+    void doGetWhenParameterAbsentThenReturnList() {
         List<QualificationSimpleDto> orders = Arrays.asList(new QualificationSimpleDto(), new QualificationSimpleDto());
-        var mockWriter = mock(PrintWriter.class);
 
-        when(request.getParameter(PARAMETER_ID)).thenReturn(null);
-        when(service.findAll()).thenReturn(orders);
-        when(jsonMapper.toJson(orders)).thenReturn(JSON_TEST);
-        when(response.getWriter()).thenReturn(mockWriter);
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            when(request.getParameter(PARAMETER_ID)).thenReturn(null);
+            when(service.findAll()).thenReturn(orders);
+            when(jsonMapper.toJson(orders)).thenReturn(JSON_TEST);
 
-        servlet.doGet(request, response);
+            servlet.doGet(request, response);
 
-        verify(request, times(1)).getParameter(PARAMETER_ID);
-        verify(service, times(1)).findAll();
-        verify(jsonMapper, times(1)).toJson(orders);
-        verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
-        verify(response, times(1)).getWriter();
-        verify(mockWriter, times(1)).println(anyString());
+            verify(request, times(1)).getParameter(PARAMETER_ID);
+            verify(service, times(1)).findAll();
+            verify(jsonMapper, times(1)).toJson(orders);
+            verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
+            verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
+            mockedStatic.verify(() -> ServletUtil.sendJsonResponse(anyString(), eq(response)));
+        }
+
     }
 
     @Test
@@ -126,59 +129,39 @@ class QualificationServletTest {
     }
 
     @Test
-    void doGetWhenDtoWriterThrowsIOExceptionThenHandleException() throws IOException {
-        var dto = new QualificationDto();
+    void doGetWhenSendJsonThrowsIOExceptionThenHandleException() {
+        var dto = mock(QualificationDto.class);
 
-        when(request.getParameter(PARAMETER_ID)).thenReturn(String.valueOf(LONG_ID));
-        when(service.findById(LONG_ID)).thenReturn(dto);
-        when(jsonMapper.toJson(dto)).thenReturn(JSON_TEST);
-        when(response.getWriter()).thenThrow(new IOException("Mocked IOException"));
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            when(request.getParameter(PARAMETER_ID)).thenReturn(String.valueOf(LONG_ID));
+            when(service.findById(LONG_ID)).thenReturn(dto);
+            when(jsonMapper.toJson(dto)).thenReturn(JSON_TEST);
+            mockedStatic.when(() -> ServletUtil.sendJsonResponse(JSON_TEST, response)).thenThrow(new IOException("Mocked IOException"));
 
-        servlet.doGet(request, response);
+            servlet.doGet(request, response);
 
-        verify(request, times(1)).getParameter(PARAMETER_ID);
-        verify(service, times(1)).findById(LONG_ID);
-        verify(jsonMapper, times(1)).toJson(dto);
-        verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
-        verify(response, times(1)).getWriter();
-        verify(exceptionHandler, times(1)).handleException(any(IOException.class), eq(response));
+            verify(request, times(1)).getParameter(PARAMETER_ID);
+            verify(service, times(1)).findById(LONG_ID);
+            verify(jsonMapper, times(1)).toJson(dto);
+            verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
+            verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
+            mockedStatic.verify(() -> ServletUtil.sendJsonResponse(anyString(), eq(response)));
+            verify(exceptionHandler, times(1)).handleException(any(IOException.class), eq(response));
+        }
     }
 
     @Test
-    void doGetWhenListWriterThrowsIOExceptionThenHandleException() throws IOException {
-        var dto = new QualificationDto();
-
-        when(request.getParameter(PARAMETER_ID)).thenReturn(String.valueOf(LONG_ID));
-        when(service.findById(LONG_ID)).thenReturn(dto);
-        when(jsonMapper.toJson(dto)).thenReturn(JSON_TEST);
-        when(response.getWriter()).thenThrow(new IOException("Mocked IOException"));
-
-        servlet.doGet(request, response);
-
-        verify(request, times(1)).getParameter(PARAMETER_ID);
-        verify(service, times(1)).findById(LONG_ID);
-        verify(jsonMapper, times(1)).toJson(dto);
-        verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_OK);
-        verify(response, times(1)).getWriter();
-        verify(exceptionHandler, times(1)).handleException(any(IOException.class), eq(response));
-    }
-
-    @Test
-    void doPostWhenBodyPresentedAndSaveSuccesThenCreated() throws IOException {
+    void doPostWhenBodyPresentedAndSaveSuccessThenCreated() {
         String jsonBody = "test";
         var dto = spy(QualificationSimpleDto.class);
         var dtoSaved = spy(QualificationSimpleDto.class);
-        var printWriter = mock(PrintWriter.class);
         dtoSaved.setId(1L);
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
             when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dto);
             when(service.save(dto)).thenReturn(dtoSaved);
             when(jsonMapper.toJson(dtoSaved)).thenReturn(jsonBody);
-            when(response.getWriter()).thenReturn(printWriter);
 
             servlet.doPost(request, response);
 
@@ -188,19 +171,18 @@ class QualificationServletTest {
             verify(jsonMapper, times(1)).toJson(any(QualificationSimpleDto.class));
             verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
             verify(response, times(1)).setStatus(HttpServletResponse.SC_CREATED);
-            verify(response, times(1)).getWriter();
-            verify(printWriter, times(1)).println(anyString());
+            mockedStatic.verify(() -> ServletUtil.sendJsonResponse(jsonBody, response), times(1));
         }
     }
 
     @Test
-    void doPostWhenBodyPresentedAndSaveFailThenBadRequest() throws IOException {
+    void doPostWhenBodyPresentedAndSaveFailThenBadRequest() {
         String jsonBody = "test";
         var dto = spy(QualificationSimpleDto.class);
         var dtoSaved = spy(QualificationSimpleDto.class);
         dtoSaved.setId(1L);
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
             when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dto);
             when(service.save(dto)).thenReturn(null);
@@ -215,18 +197,38 @@ class QualificationServletTest {
     }
 
     @Test
-    void doPostWhenWriterThrowsIOThenHandleException() throws IOException {
+    void doPostWhenBodyPresentedAndDtoIdNullThenBadRequest() {
+        String jsonBody = "test";
+        var dto = spy(QualificationSimpleDto.class);
+        var dtoSaved = spy(QualificationSimpleDto.class);
+
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
+            when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dto);
+            when(service.save(dto)).thenReturn(dtoSaved);
+
+            servlet.doPost(request, response);
+
+            mockedStatic.verify(() -> ServletUtil.getJsonBody(request), times(1));
+            verify(jsonMapper, times(1)).toSimpleDto(anyString());
+            verify(service, times(1)).save(any(QualificationSimpleDto.class));
+            verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+    }
+
+    @Test
+    void doPostWhenSendJsonThrowsIOThenHandleException() {
         String jsonBody = "test";
         var dto = spy(QualificationSimpleDto.class);
         var dtoSaved = spy(QualificationSimpleDto.class);
         dtoSaved.setId(1L);
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
             when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dto);
             when(service.save(dto)).thenReturn(dtoSaved);
             when(jsonMapper.toJson(dtoSaved)).thenReturn(jsonBody);
-            when(response.getWriter()).thenThrow(new IOException("Mocked IOException"));
+            mockedStatic.when(() -> ServletUtil.sendJsonResponse(jsonBody, response)).thenThrow(new IOException("Mocked"));
 
             servlet.doPost(request, response);
 
@@ -236,18 +238,30 @@ class QualificationServletTest {
             verify(jsonMapper, times(1)).toJson(any(QualificationSimpleDto.class));
             verify(response, times(1)).setContentType(JSON_CONTENT_TYPE);
             verify(response, times(1)).setStatus(HttpServletResponse.SC_CREATED);
-            verify(response, times(1)).getWriter();
+            mockedStatic.verify(() -> ServletUtil.sendJsonResponse(anyString(), eq(response)));
             verify(exceptionHandler, times(1)).handleException(any(IOException.class), eq(response));
         }
     }
 
     @Test
-    void doUpdateWhenBodyPresentedAndUpdateSuccesThenCreated() {
+    void doPostWhenGetJsonBodyThrowsIOThenHandleException() {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenThrow(new IOException("Mock"));
+
+            servlet.doPost(request, response);
+
+            mockedStatic.verify(() -> ServletUtil.getJsonBody(request), times(1));
+            verify(exceptionHandler, times(1)).handleException(any(IOException.class), eq(response));
+        }
+    }
+
+    @Test
+    void doPutWhenBodyPresentedAndUpdateSuccessThenCreated() {
         String jsonBody = "test";
         var dtoUpdate = spy(QualificationSimpleDto.class);
         dtoUpdate.setId(1L);
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
             when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dtoUpdate);
             when(service.update(dtoUpdate)).thenReturn(true);
@@ -262,12 +276,12 @@ class QualificationServletTest {
     }
 
     @Test
-    void doUpdateWhenBodyPresentedAndUpdateFailThenBadRequest() {
+    void doPutWhenBodyPresentedAndUpdateFailThenBadRequest() {
         String jsonBody = "test";
         var dtoUpdate = spy(QualificationSimpleDto.class);
         dtoUpdate.setId(1L);
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
             when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(dtoUpdate);
             when(service.update(dtoUpdate)).thenReturn(false);
@@ -282,11 +296,26 @@ class QualificationServletTest {
     }
 
     @Test
-    void doUpdateWhenWriterThrowsIOThenHandleException() {
-        var dtoSaved = spy(QualificationSimpleDto.class);
-        dtoSaved.setId(1L);
+    void doPutWhenBodyPresentedMapperReturnNullThenBadRequest() {
+        String jsonBody = "test";
 
-        try(MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
+            mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenReturn(jsonBody);
+            when(jsonMapper.toSimpleDto(jsonBody)).thenReturn(null);
+            when(service.update(null)).thenReturn(false);
+
+            servlet.doPut(request, response);
+
+            mockedStatic.verify(() -> ServletUtil.getJsonBody(request), times(1));
+            verify(jsonMapper, times(1)).toSimpleDto(jsonBody);
+            verify(service, times(1)).update(null);
+            verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+    }
+
+    @Test
+    void doPutWhenGetJsonBodyThrowsIOThenHandleException() {
+        try (MockedStatic<ServletUtil> mockedStatic = mockStatic(ServletUtil.class)) {
             mockedStatic.when(() -> ServletUtil.getJsonBody(request)).thenThrow(new IOException("Mocked IOException"));
 
             servlet.doPut(request, response);
