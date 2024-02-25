@@ -35,7 +35,6 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
     private HikariConfig preparedConfig() {
         var config = new HikariConfig(PropertiesUtil.getProperties());
-        config.setConnectionTimeout(10_000);
         config.setMaximumPoolSize(20);
         return config;
     }
@@ -55,6 +54,5 @@ public class ConnectionManagerImpl implements ConnectionManager {
     @Override
     public void destroy() {
         INSTANCE = null;
-
     }
 }

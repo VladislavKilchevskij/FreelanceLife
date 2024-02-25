@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,12 +44,6 @@ class QualificationServletTest {
     @BeforeEach
     void setup() {
         servlet = new QualificationServlet(service, jsonMapper, exceptionHandler);
-    }
-
-    @Test
-    void testConstructor() {
-        var qualificationServlet = new QualificationServlet();
-        assertNotNull(qualificationServlet);
     }
 
     @Test

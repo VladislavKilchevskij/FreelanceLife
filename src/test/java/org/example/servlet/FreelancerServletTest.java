@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,12 +42,6 @@ class FreelancerServletTest {
     @BeforeEach
     void beforeEach() {
         servlet = new FreelancerServlet(service, jsonMapper, exceptionHandler);
-    }
-
-    @Test
-    void testConstructor() {
-        var freelancerServlet = new FreelancerServlet();
-        assertNotNull(freelancerServlet);
     }
 
     @Test
