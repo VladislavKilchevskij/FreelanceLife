@@ -2,6 +2,7 @@ package org.example.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.db.impl.ConnectionManagerImpl;
 import org.example.service.OrderService;
 import org.example.service.dto.OrderDto;
 import org.example.service.dto.OrderSimpleDto;
@@ -48,9 +49,14 @@ class OrderServletTest {
     }
 
     @Test
-    void testConstructor() {
-        var orderServlet = new OrderServlet();
-        assertNotNull(orderServlet);
+    void testConstructorWithoutParameters() {
+        OrderServlet servletWithoutParameters;
+        try(MockedStatic<ConnectionManagerImpl> mockedStatic = mockStatic(ConnectionManagerImpl.class)) {
+            mockedStatic.when(ConnectionManagerImpl::getInstance).thenReturn(mock(ConnectionManagerImpl.class));
+            servletWithoutParameters = new OrderServlet();
+        }
+
+        assertNotNull(servletWithoutParameters);
     }
 
     @Test

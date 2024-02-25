@@ -2,6 +2,7 @@ package org.example.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.db.impl.ConnectionManagerImpl;
 import org.example.service.FreelancerService;
 import org.example.service.dto.*;
 import org.example.servlet.handler.ExceptionHandler;
@@ -41,14 +42,19 @@ class FreelancerServletTest {
     private static final Long LONG_ID = 1L;
 
     @BeforeEach
-    void beforeEach() {
+    void setup() {
         servlet = new FreelancerServlet(service, jsonMapper, exceptionHandler);
     }
 
     @Test
-    void testConstructor() {
-        var freelancerServlet = new FreelancerServlet();
-        assertNotNull(freelancerServlet);
+    void testConstructorWithoutParameters() {
+        FreelancerServlet servletWithoutParameters;
+        try(MockedStatic<ConnectionManagerImpl> mockedStatic = mockStatic(ConnectionManagerImpl.class)) {
+            mockedStatic.when(ConnectionManagerImpl::getInstance).thenReturn(mock(ConnectionManagerImpl.class));
+            servletWithoutParameters = new FreelancerServlet();
+        }
+
+        assertNotNull(servletWithoutParameters);
     }
 
     @Test

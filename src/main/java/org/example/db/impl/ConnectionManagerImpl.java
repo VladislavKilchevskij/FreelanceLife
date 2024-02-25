@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 public class ConnectionManagerImpl implements ConnectionManager {
 
-    private static ConnectionManagerImpl INSTANCE;
+    private static ConnectionManagerImpl instance;
     private final HikariDataSource hikariCP;
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
 
@@ -19,7 +19,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
     }
 
     {
-        hikariCP = new HikariDataSource(preparedConfig());
+        hikariCP = new HikariDataSource(new HikariConfig(PropertiesUtil.getProperties()));
     }
 
     private ConnectionManagerImpl() {
@@ -33,15 +33,8 @@ public class ConnectionManagerImpl implements ConnectionManager {
         }
     }
 
-    private HikariConfig preparedConfig() {
-        var config = new HikariConfig(PropertiesUtil.getProperties());
-        config.setConnectionTimeout(10_000);
-        config.setMaximumPoolSize(20);
-        return config;
-    }
-
     public static ConnectionManagerImpl getInstance() {
-        return INSTANCE == null ? new ConnectionManagerImpl() : INSTANCE;
+        return instance == null ? new ConnectionManagerImpl() : instance;
     }
 
     @Override
@@ -54,7 +47,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
     }
     @Override
     public void destroy() {
-        INSTANCE = null;
-
+        hikariCP.close();
+        instance = null;
     }
 }

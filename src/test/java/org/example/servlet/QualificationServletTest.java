@@ -2,6 +2,7 @@ package org.example.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.db.impl.ConnectionManagerImpl;
 import org.example.service.QualificationService;
 import org.example.service.dto.QualificationDto;
 import org.example.service.dto.QualificationSimpleDto;
@@ -48,9 +49,14 @@ class QualificationServletTest {
     }
 
     @Test
-    void testConstructor() {
-        var qualificationServlet = new QualificationServlet();
-        assertNotNull(qualificationServlet);
+    void testConstructorWithoutParameters() {
+        QualificationServlet servletWithoutParameters;
+        try(MockedStatic<ConnectionManagerImpl> mockedStatic = mockStatic(ConnectionManagerImpl.class)) {
+            mockedStatic.when(ConnectionManagerImpl::getInstance).thenReturn(mock(ConnectionManagerImpl.class));
+            servletWithoutParameters = new QualificationServlet();
+        }
+
+        assertNotNull(servletWithoutParameters);
     }
 
     @Test
